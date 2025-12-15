@@ -4,7 +4,7 @@ import { User } from "../model/schema.js"; // use .js if your file is JS
 
 // ================== CONFIG ==================
 const JWT_SECRET = process.env.JWT_SECRET || "JWT_FALLBACK_SECRET";
-const JWT_EXPIRES_IN = "1d";
+const JWT_EXPIRES_IN = "7d";
 
 // ================== TOKEN ==================
 const generateToken = (user) => {
@@ -102,9 +102,15 @@ export const login = async (req, res) => {
 
     const token = generateToken(user);
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     return res.status(200).json({
       message: "Login successful",
-      token,
       user: {
         id: user._id,
         name: user.name,
