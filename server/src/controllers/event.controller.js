@@ -1,6 +1,8 @@
 import { Event } from "../model/schema.js";
 
-// Create Event
+
+
+// Create Event--------> FOR ORGANIZER
 export const createEvent = async (req, res) => {
     try {
         const { title, description, isPublished, category, venue, startDate, endDate, normalPrice, vipPrice } = req.body;
@@ -66,7 +68,7 @@ export const createEvent = async (req, res) => {
 };
 
 
-// Delete Event
+// Delete Event ------> FOR ORGANIZER
 export const deleteEvent = async (req, res) => {
     try {
         const { id } = req.params;
@@ -94,7 +96,7 @@ export const deleteEvent = async (req, res) => {
 
 
 
-//  updateEvent
+//  UPDATE EVENT ------> FOR ORGANIZER
 export const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -209,6 +211,7 @@ export const updateEvent = async (req, res) => {
 
 
 
+// GET ALL EVENTS--------> FOR USERS,ORGANIZERS,ADMIN
 export const getAllEvents = async (req, res) => {
   try {
     const {
@@ -345,7 +348,7 @@ export const getAllEvents = async (req, res) => {
   }
 };
 
-
+// GET SINGLE EVENT BY ID ------> FOR USERS,ORGANIZERS,ADMIN
 export const getEventById = async (req, res) => {
   try {
     const { id } = req.params;
