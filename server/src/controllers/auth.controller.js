@@ -1,14 +1,13 @@
-import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { User, IUser } from "../model/schema"; // ✅ named import
+import { User } from "../model/schema.js"; // use .js if your file is JS
 
 // ================== CONFIG ==================
 const JWT_SECRET = process.env.JWT_SECRET || "JWT_FALLBACK_SECRET";
 const JWT_EXPIRES_IN = "1d";
 
 // ================== TOKEN ==================
-const generateToken = (user: IUser) => {
+const generateToken = (user) => {
   return jwt.sign(
     {
       id: user._id,
@@ -21,7 +20,7 @@ const generateToken = (user: IUser) => {
 };
 
 // ================== REGISTER ==================
-export const register = async (req: Request, res: Response) => {
+export const register = async (req, res) => {
   try {
     const { name, email, password, role, phone } = req.body;
 
@@ -71,7 +70,7 @@ export const register = async (req: Request, res: Response) => {
 };
 
 // ================== LOGIN ==================
-export const login = async (req: Request, res: Response) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
