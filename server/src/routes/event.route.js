@@ -6,10 +6,10 @@ import upload from '../middlewares/uploadMiddleware.js';
 
 const router = express.Router();
 
-router.post('/create-event', upload.single("image"), createEvent);
+router.post('/create-event', protect, upload.single("image"), createEvent);
 router.delete('/delete-event/:id',protect, deleteEvent);
-router.put('/update-event/:id', upload.single("image"), updateEvent);
-router.get('/get-all-events', protect, getAllEvents);
+router.put('/update-event/:id',protect, upload.single("image"), updateEvent);
+router.get('/get-all-events',protect, getAllEvents);
 router.get('/get-eventById/:id', protect, getEventById);
 
 export default router;

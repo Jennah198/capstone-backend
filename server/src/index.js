@@ -1,6 +1,7 @@
 
-import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
+import express from "express";
 import connectDB from "./config/db.js";
 import authRoute from "./routes/auth.route.js";
 import eventRoutes from "./routes/event.route.js"
@@ -9,10 +10,11 @@ import venueRoutes from './routes/venue.route.js'
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import path from "path";
-dotenv.config();
+
 
 const app = express();
 const port = process.env.PORT || 8000;
+
 
 
 app.use(cookieParser());

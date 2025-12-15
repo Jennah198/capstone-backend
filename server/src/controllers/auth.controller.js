@@ -22,7 +22,7 @@ const generateToken = (user) => {
 // ================== REGISTER ==================
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role, phone } = req.body;
+    const { name, email, password, phone } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -43,16 +43,12 @@ export const register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: role || "user",
       phone,
       isVerified: false,
     });
 
-    const token = generateToken(user);
-
     return res.status(201).json({
       message: "User registered successfully",
-      token,
       user: {
         id: user._id,
         name: user.name,
@@ -94,11 +90,13 @@ export const login = async (req, res) => {
       });
     }
 
-    if (!user.isVerified) {
-      return res.status(403).json({
-        message: "Account not verified",
-      });
-    }
+    //Email verfication(eg,OTP) should be integrated at registration otherwise user not verified
+    
+    // if (!user.isVerified) {
+    //   return res.status(403).json({
+    //     message: "Account not verified",
+    //   });
+    // }
 
     const token = generateToken(user);
 
@@ -125,6 +123,74 @@ export const login = async (req, res) => {
     console.error("LOGIN ERROR:", error);
     return res.status(500).json({
       message: "Server error during login",
+    });
+  }
+};
+
+
+
+//CHANGE ROLE ---------> ONLY FOR ADMIN
+export const changeUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+
+    const allowedRoles = ["user", "organizer", "admin"];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role",
+      });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "User role updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+
+// GET ALL USERS ---------> ONLY FOR ADMIN
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find()
+      .select("-password") 
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
