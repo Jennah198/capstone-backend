@@ -31,28 +31,27 @@ export const User = mongoose.model("User", UserSchema);
    EVENT MODEL
 ====================================================== */
 
-const EventSchema = new Schema(
-  {
+const EventSchema = new Schema({
     title: { type: String, required: true },
-    description: String,
-    organizer: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    category: { type: Schema.Types.ObjectId, ref: "Category" },
-    venue: { type: Schema.Types.ObjectId, ref: "Venue" },
+    description: {type:String,default:""},
+    organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required:true },
+    venue: { type: mongoose.Schema.Types.ObjectId, ref: 'Venue', required:true},
     startDate: { type: Date, required: true },
-    endDate: Date,
-    images: String,
-    normalPrice: {
-      price: Number,
-      quantity: Number,
+    endDate: {type:Date,default:null},
+    image: {type:String,default:""},
+    normalPrice :{
+        price: { type: Number,default:0},
+        quantity:{ type: Number,default:0}
     },
-    vipPrice: {
-      price: Number,
-      quantity: Number,
+    vipPrice :{
+        price: { type: Number,default:0},
+        quantity:{ type: Number,default:0}
     },
+
     isPublished: { type: Boolean, default: false },
-  },
-  { timestamps: true }
-);
+
+}, { timestamps: true });
 
 export const Event = mongoose.model("Event", EventSchema);
 
@@ -74,16 +73,14 @@ export const Category = mongoose.model("Category", CategorySchema);
    VENUE MODEL
 ====================================================== */
 
-const VenueSchema = new Schema(
-  {
+const VenueSchema = new Schema({
     name: { type: String, required: true },
+    image: { type: String, default: "" },
     address: String,
     city: String,
     country: String,
     capacity: Number,
-  },
-  { timestamps: true }
-);
+}, { timestamps: true });
 
 export const Venue = mongoose.model("Venue", VenueSchema);
 
