@@ -7,9 +7,11 @@ import authRoute from "./routes/auth.route.js";
 import eventRoutes from "./routes/event.route.js"
 import categoryRoutes from './routes/category.route.js'
 import venueRoutes from './routes/venue.route.js'
+import orderRoutes from './routes/order.route.js'
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import path from "path";
+
 
 
 const app = express();
@@ -34,6 +36,7 @@ app.use("/api/auth", authRoute);
 app.use('/api/events', eventRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/venues', venueRoutes);
+app.use('/api/orders', orderRoutes);
 
 
 app.listen(port, () => {
