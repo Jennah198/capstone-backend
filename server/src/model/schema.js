@@ -48,7 +48,7 @@ const EventSchema = new Schema({
         price: { type: Number,default:0},
         quantity:{ type: Number,default:0}
     },
-
+    totalTicketsSold:{type:Number,default:0},
     isPublished: { type: Boolean, default: false },
 
 }, { timestamps: true });
@@ -92,19 +92,17 @@ const OrderSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     event: { type: Schema.Types.ObjectId, ref: "Event", required: true },
-    tickets: [
-      {
-        ticketType: { type: String, enum: ["normal", "vip"] },
-        quantity: Number,
-        price: Number,
-      },
-    ],
+    tickets: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ticket" }],
+    ticketType: { type: String, enum: ["normal", "vip"] },
+    price: Number,
+    quantity: Number,
     totalAmount: Number,
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed"],
       default: "pending",
     },
+   orderNumber: { type: String, default: "" },
   },
   { timestamps: true }
 );
@@ -119,13 +117,11 @@ const TicketSchema = new Schema(
   {
     event: { type: Schema.Types.ObjectId, ref: "Event", required: true },
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    ticketType: {
-      type: String,
-      enum: ["normal", "vip"],
-      required: true,
-    },
+    order: { type: mongoose.Schema.Types.ObjectId, ref: "Order", required: true },
+    ticketType: { type: String, enum: ["normal", "vip"], required: true },
     price: { type: Number, required: true },
     qrCode: String,
+    ticketCode: { type: String, default:"" },
     isUsed: { type: Boolean, default: false },
   },
   { timestamps: true }
