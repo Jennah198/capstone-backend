@@ -1,5 +1,4 @@
-import { Event } from "../model/schema.js";
-
+import { Event,Category,Venue } from "../model/schema.js";
 
 
 // Create Event--------> FOR ORGANIZER
@@ -322,7 +321,7 @@ export const getAllEvents = async (req, res) => {
       venue: event.venue,
       startDate: event.startDate,
       endDate: event.endDate,
-      image: event.images,
+      image: event.image,
       normalPrice: event.normalPrice,
       vipPrice: event.vipPrice,
       isPublished: event.isPublished,
@@ -375,6 +374,158 @@ export const getEventById = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal server problem.",
+    });
+  }
+};
+
+
+// GET EVENT BY CATEGORY
+export const getEventsByCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+
+
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: 'Category not found'
+      });
+    }
+
+    const events = await Event.find({ 
+      category: categoryId,
+      isPublished: true 
+    })
+    .populate('organizer', 'name')
+    .populate('venue', 'name city')
+    .populate('category', 'name')
+    .sort({ startDate: 1 }) 
+    .lean();
+
+    // Format events for response
+    const formattedEvents = events.map(event => {
+      const now = new Date();
+      const startDate = new Date(event.startDate);
+      const endDate = event.endDate ? new Date(event.endDate) : null;
+      
+      let eventStatus = 'upcoming';
+      if (startDate <= now) {
+        if (endDate && endDate >= now) {
+          eventStatus = 'ongoing';
+        } else if (endDate && endDate < now) {
+          eventStatus = 'completed';
+        } else {
+          eventStatus = 'ongoing';
+        }
+      }
+
+      return {
+        ...event,
+        status: eventStatus,
+        totalTickets: (event.normalPrice?.quantity || 0) + (event.vipPrice?.quantity || 0),
+        hasNormalTicket: event.normalPrice?.quantity > 0,
+        hasVipTicket: event.vipPrice?.price > 0 && event.vipPrice?.quantity > 0
+      };
+    });
+
+    res.json({
+      success: true,
+      events: formattedEvents,
+      category: {
+        _id: category._id,
+        name: category.name,
+        image: category.image
+      }
+    });
+
+  } catch (error) {
+    console.error('Get events by category error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server problem'
+    });
+  }
+};
+
+
+
+
+// GET EVENTS BY VENUE
+export const getEventsByVenue = async (req, res) => {
+  try {
+    const { venueId } = req.params;
+
+    console.log("venue id is:" + venueId);
+    
+    const venue = await Venue.findById(venueId);
+    if (!venue) {
+      return res.status(404).json({
+        success: false,
+        message: 'Venue not found'
+      });
+    }
+
+    const events = await Event.find({ 
+      venue: venueId,
+      isPublished: true 
+    })
+    .populate('organizer', 'name')
+    .populate('venue', 'name city address capacity')
+    .populate('category', 'name')
+    .sort({ startDate: 1 })
+    .lean();
+
+    const formattedEvents = events.map(event => {
+      const now = new Date();
+      const startDate = new Date(event.startDate);
+      const endDate = event.endDate ? new Date(event.endDate) : null;
+      
+      // Determine event status
+      let eventStatus = 'upcoming';
+      if (startDate <= now) {
+        if (endDate && endDate >= now) {
+          eventStatus = 'ongoing';
+        } else if (endDate && endDate < now) {
+          eventStatus = 'completed';
+        } else {
+          eventStatus = 'ongoing';
+        }
+      }
+
+      return {
+        ...event,
+        status: eventStatus,
+        totalTickets: (event.normalPrice?.quantity || 0) + (event.vipPrice?.quantity || 0),
+        ticketsSold: event.totalTicketsSold || 0,
+        hasNormalTicket: event.normalPrice?.quantity > 0,
+        hasVipTicket: event.vipPrice?.price > 0 && event.vipPrice?.quantity > 0,
+        minPrice: Math.min(
+          event.normalPrice?.price || Infinity,
+          event.vipPrice?.price || Infinity
+        )
+      };
+    });
+
+    res.json({
+      success: true,
+      events: formattedEvents,
+      venue: {
+        _id: venue._id,
+        name: venue.name,
+        image: venue.image,
+        address: venue.address,
+        city: venue.city,
+        country: venue.country,
+        capacity: venue.capacity
+      }
+    });
+
+  } catch (error) {
+    console.error('Get events by venue error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching events'
     });
   }
 };

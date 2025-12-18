@@ -9,6 +9,8 @@ import categoryRoutes from './routes/category.route.js'
 import venueRoutes from './routes/venue.route.js'
 import orderRoutes from './routes/order.route.js'
 import ticketRoutes from './routes/ticketDownload.route.js'
+import adminRoutes from './routes/admin.route.js'
+
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import path from "path";
@@ -39,6 +41,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/admin', adminRoutes);
 
 
 app.listen(port, () => {
