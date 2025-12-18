@@ -6,7 +6,7 @@ import { createOrder, getUserOrders } from "../controllers/order.controller.js";
 const router = express.Router();
 
 
-router.post('/create-order', createOrder);
+router.post('/create-order',protect, createOrder);
 router.get('/user-orders', protect, getUserOrders);
 
 

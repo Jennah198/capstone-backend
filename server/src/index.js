@@ -8,6 +8,7 @@ import eventRoutes from "./routes/event.route.js"
 import categoryRoutes from './routes/category.route.js'
 import venueRoutes from './routes/venue.route.js'
 import orderRoutes from './routes/order.route.js'
+import ticketRoutes from './routes/ticketDownload.route.js'
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import path from "path";
@@ -37,6 +38,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/tickets', ticketRoutes);
 
 
 app.listen(port, () => {
