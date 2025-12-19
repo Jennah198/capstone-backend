@@ -4,7 +4,7 @@ import { User } from "../model/schema.js"; // use .js if your file is JS
 
 // ================== CONFIG ==================
 const JWT_SECRET = process.env.JWT_SECRET || "JWT_FALLBACK_SECRET";
-const JWT_EXPIRES_IN = "7d";
+const JWT_EXPIRES_IN = "1d";
 
 // ================== TOKEN ==================
 const generateToken = (user) => {
@@ -22,7 +22,7 @@ const generateToken = (user) => {
 // ================== REGISTER ==================
 export const register = async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, secretKey } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -37,6 +37,26 @@ export const register = async (req, res) => {
       });
     }
 
+    // Check if phone already exists
+    const existingPhone = await User.findOne({ phone });
+    if (existingPhone) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number already exist",
+      });
+    }
+
+    let role = "user"
+    const secret = process.env.SECRET_KEY
+    // FOR REGISTER AS ADMIN IF SECRET KEY IS CORRECT, OTHERWISE REGISTER AS USER
+    if (secretKey) {
+      if (secretKey !== secret) {
+        return res.status(400).json({ success: false, message: "Invalid secretKey" })
+      } else {
+        role = "admin"
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
@@ -44,6 +64,7 @@ export const register = async (req, res) => {
       email,
       password: hashedPassword,
       phone,
+      role,
       isVerified: false,
     });
 
@@ -91,7 +112,7 @@ export const login = async (req, res) => {
     }
 
     //Email verfication(eg,OTP) should be integrated at registration otherwise user not verified
-    
+
     // if (!user.isVerified) {
     //   return res.status(403).json({
     //     message: "Account not verified",
@@ -104,7 +125,7 @@ export const login = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 1 * 24 * 60 * 60 * 1000,
     });
 
     return res.status(200).json({
@@ -125,6 +146,21 @@ export const login = async (req, res) => {
       message: "Server error during login",
     });
   }
+};
+
+
+export const logout = (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "none",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+  });
+
+  return res.json({
+    success: true,
+    message: "Logged out successfully",
+  });
 };
 
 
@@ -179,7 +215,7 @@ export const changeUserRole = async (req, res) => {
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find()
-      .select("-password") 
+      .select("-password")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -191,6 +227,36 @@ export const getAllUsers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+
+export const getUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await User.findById(userId).select(
+      "-password -otp -otpExpires"
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+
+  } catch (error) {
+    console.error("Get profile error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user profile",
     });
   }
 };
