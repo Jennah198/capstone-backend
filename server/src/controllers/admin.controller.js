@@ -106,3 +106,100 @@ export const updateEventPublishStatus = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+
+
+// GET ALL ORDERS
+export const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate('user', 'name email')
+      .populate('event', 'title image')
+      .populate('tickets')
+      .sort({ createdAt: -1 });
+
+    res.json({ 
+      success: true, 
+      orders 
+    });
+  } catch (error) {
+    console.error('Get orders error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error fetching orders' 
+    });
+  }
+};
+
+// UPDATE ORDER STATTUS
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['pending', 'paid', 'failed'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status'
+      });
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      id,
+      { paymentStatus: status },
+      { new: true }
+    )
+    .populate('user', 'name email')
+    .populate('event', 'title');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Order status updated',
+      order
+    });
+  } catch (error) {
+    console.error('Update order status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error updating order status'
+    });
+  }
+};
+
+
+// DELETE ORDER
+export const deleteOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Also delete associated tickets
+    await Ticket.deleteMany({ order: id });
+
+    const order = await Order.findByIdAndDelete(id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Order deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete order error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error deleting order'
+    });
+  }
+};
