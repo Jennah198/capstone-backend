@@ -8,7 +8,7 @@ const router = express.Router();
 
 
 router.post('/create-order',protect, createOrder);
-router.get('/user-orders', protect, authorize("user"), getUserOrders);
+router.get('/user-orders', getUserOrders);
 
 
 export default router
