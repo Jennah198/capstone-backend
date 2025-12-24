@@ -62,7 +62,7 @@ export const createOrder = async (req, res) => {
         const order = new Order({
             user: userId,
             event: eventId,
-            ticketType,
+            ticketType, 
             price: pricePerTicket,
             quantity,
             totalAmount,

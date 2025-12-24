@@ -13,7 +13,7 @@ router.post('/login', login);
 router.post('/logout', logout);
 
 router.post('/change-role/:id',protect, authorize("admin"), changeUserRole); // FOR ADMIN ONLY
-router.get('/get-users', protect, authorize("admin"), getAllUsers);  // FOR ADMIN ONLY
+router.get('/get-users', getAllUsers);  // FOR ADMIN ONLY
 router.get('/user-profile',protect, getUserProfile);
 
 export default router;
