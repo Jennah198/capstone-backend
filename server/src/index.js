@@ -1,6 +1,8 @@
 
 import * as dotenv from 'dotenv';
 import express from "express";
+import swaggerUi from 'swagger-ui-express';
+import specs from './config/swagger.js';
 import connectDB from "./config/db.js";
 import authRoute from "./routes/auth.route.js";
 import eventRoutes from "./routes/event.route.js"
@@ -37,6 +39,9 @@ app.use("/uploads", express.static(uploadsDir));
 mongoose.connection.once("open", () => {
   console.log("Connected to MongoDB");
 });
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
 app.use("/api/auth", authRoute);
 app.use('/api/events', eventRoutes);
 app.use('/api/categories', categoryRoutes);
