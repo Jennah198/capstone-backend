@@ -116,7 +116,7 @@ export const createOrder = async (req, res) => {
 
         // In production, we should integrate with payment gateway(CHAPA with telebirr)
         // For now, simulate payment success
-        order.paymentStatus = 'paid';
+        order.paymentStatus = 'pending';
         await order.save();
 
 
