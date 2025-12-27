@@ -72,52 +72,52 @@ export const createOrder = async (req, res) => {
 
         await order.save();
 
-        // Generate tickets
-        const tickets = [];
-        const qrCodes = [];
+        // // Generate tickets
+        // const tickets = [];
+        // const qrCodes = [];
 
-        for (let i = 0; i < quantity; i++) {
-            const ticketId = uuidv4();
+        // for (let i = 0; i < quantity; i++) {
+        //     const ticketId = uuidv4();
 
-            // Generate QR Code
-            const qrData = JSON.stringify({
-                ticketId,
-                eventId,
-                userId,
-                ticketType,
-                orderId: order._id
-            });
+        //     // Generate QR Code
+        //     const qrData = JSON.stringify({
+        //         ticketId,
+        //         eventId,
+        //         userId,
+        //         ticketType,
+        //         orderId: order._id
+        //     });
 
-            const qrCodeImage = await QRCode.toDataURL(qrData);
+        //     const qrCodeImage = await QRCode.toDataURL(qrData);
 
-            const ticket = new Ticket({
-                event: eventId,
-                user: userId,
-                ticketType,
-                price: pricePerTicket,
-                qrCode: qrCodeImage,
-                ticketCode: `TKT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-                order: order._id
-            });
+        //     const ticket = new Ticket({
+        //         event: eventId,
+        //         user: userId,
+        //         ticketType,
+        //         price: pricePerTicket,
+        //         qrCode: qrCodeImage,
+        //         ticketCode: `TKT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        //         order: order._id
+        //     });
 
-            await ticket.save();
-            tickets.push(ticket);
-            qrCodes.push(qrCodeImage);
-        }
+        //     await ticket.save();
+        //     tickets.push(ticket);
+        //     qrCodes.push(qrCodeImage);
+        // }
 
-        // Update ticket availability in event
-        event[ticketPriceField].quantity -= quantity;
-        event.totalTicketsSold = (event.totalTicketsSold || 0) + quantity;
-        await event.save();
+        // // Update ticket availability in event
+        // event[ticketPriceField].quantity -= quantity;
+        // event.totalTicketsSold = (event.totalTicketsSold || 0) + quantity;
+        // await event.save();
 
-        // Update order with ticket references
-        order.tickets = tickets.map(ticket => ticket._id);
-        await order.save();
+        // // Update order with ticket references
+        // order.tickets = tickets.map(ticket => ticket._id);
+        // await order.save();
 
-        // In production, we should integrate with payment gateway(CHAPA with telebirr)
-        // For now, simulate payment success
-        order.paymentStatus = 'pending';
-        await order.save();
+        // // In production, we should integrate with payment gateway(CHAPA with telebirr)
+        // // For now, simulate payment success
+        // order.paymentStatus = 'pending';
+        // await order.save();
 
 
         res.status(201).json({
