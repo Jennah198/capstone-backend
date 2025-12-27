@@ -129,13 +129,7 @@ export const createOrder = async (req, res) => {
                 totalAmount: order.totalAmount,
                 paymentStatus: order.paymentStatus,
                 createdAt: order.createdAt
-            },
-            tickets: tickets.map(t => ({
-                ticketCode: t.ticketCode,
-                ticketType: t.ticketType,
-                price: t.price
-            })),
-            // paymentUrl: 'https://payment-gateway.com/checkout' // In production
+            }
         });
 
     } catch (error) {
