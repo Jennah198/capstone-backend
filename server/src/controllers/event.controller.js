@@ -1,95 +1,95 @@
-import { Event,Category,Venue } from "../model/schema.js";
+import { Event, Category, Venue } from "../model/schema.js";
 
 
 // Create Event--------> FOR ORGANIZER
 export const createEvent = async (req, res) => {
-    try {
-        const { title, description, isPublished, category, venue, startDate, endDate, normalPrice, vipPrice } = req.body;
+  try {
+    const { title, description, isPublished, category, venue, startDate, endDate, normalPrice, vipPrice } = req.body;
 
-        const id = req.user.id
-        if(!id){
-            console.log("Id not found");
-            return res.status(400).json({ success: false, message: "Organizer ID not found" });
-        }
-        let parsedNormalPrice = null;
-        let parsedVipPrice = null;
-
-        if (normalPrice) {
-            try {
-                parsedNormalPrice = JSON.parse(normalPrice);
-            } catch (parseError) {
-                console.error("Error parsing normalPrice:", parseError);
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid normalPrice format"
-                });
-            }
-        }
-
-        if (vipPrice) {
-            try {
-                parsedVipPrice = JSON.parse(vipPrice);
-            } catch (parseError) {
-                console.error("Error parsing vipPrice:", parseError);
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid vipPrice format"
-                });
-            }
-        }
-
-
-        const imageFile = req.file ? req.file.filename : "";
-        const event = await Event.create({
-            title,
-            description,
-            organizer: id, 
-            category,
-            venue,
-            startDate,
-            endDate,
-            image: imageFile,
-            normalPrice:parsedNormalPrice,
-            vipPrice:parsedVipPrice,
-            isPublished
-        });
-
-        return res.status(201).json({
-            success: true,
-            message: "Event created successfully",
-            eventId: event._id
-        });
-
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ success: false, message: "Internal Server Problem" });
+    const id = req.user.id
+    if (!id) {
+      console.log("Id not found");
+      return res.status(400).json({ success: false, message: "Organizer ID not found" });
     }
+    let parsedNormalPrice = null;
+    let parsedVipPrice = null;
+
+    if (normalPrice) {
+      try {
+        parsedNormalPrice = JSON.parse(normalPrice);
+      } catch (parseError) {
+        console.error("Error parsing normalPrice:", parseError);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid normalPrice format"
+        });
+      }
+    }
+
+    if (vipPrice) {
+      try {
+        parsedVipPrice = JSON.parse(vipPrice);
+      } catch (parseError) {
+        console.error("Error parsing vipPrice:", parseError);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid vipPrice format"
+        });
+      }
+    }
+
+
+    const imageFile = req.file ? req.file.path : "";
+    const event = await Event.create({
+      title,
+      description,
+      organizer: id,
+      category,
+      venue,
+      startDate,
+      endDate,
+      image: imageFile,
+      normalPrice: parsedNormalPrice,
+      vipPrice: parsedVipPrice,
+      isPublished
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Event created successfully",
+      eventId: event._id
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Internal Server Problem" });
+  }
 };
 
 
 // Delete Event ------> FOR ORGANIZER
 export const deleteEvent = async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-        const event = await Event.findByIdAndDelete(id);
+    const event = await Event.findByIdAndDelete(id);
 
-        if (!event) {
-            return res.status(404).json({
-                success: false,
-                message: "Event not found"
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: "Event deleted successfully"
-        });
-
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ success: false, message: "Internal Server Problem" });
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found"
+      });
     }
+
+    return res.status(200).json({
+      success: true,
+      message: "Event deleted successfully"
+    });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ success: false, message: "Internal Server Problem" });
+  }
 };
 
 
@@ -122,10 +122,10 @@ export const updateEvent = async (req, res) => {
       vipPrice
     } = req.body;
 
-   
+
     const updateData = {};
 
-    
+
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (isPublished !== undefined) updateData.isPublished = isPublished === 'true';
@@ -134,12 +134,12 @@ export const updateEvent = async (req, res) => {
     if (startDate !== undefined) updateData.startDate = startDate;
     if (endDate !== undefined) updateData.endDate = endDate;
 
-   
+
     if (req.file) {
-      updateData.images = req.file.filename;
+      updateData.image = req.file.path;
     }
 
-  
+
     if (normalPrice !== undefined) {
       if (normalPrice && normalPrice.trim() !== '') {
         try {
@@ -159,7 +159,7 @@ export const updateEvent = async (req, res) => {
       }
     }
 
-   
+
     if (vipPrice !== undefined) {
       if (vipPrice && vipPrice.trim() !== '') {
         try {
@@ -179,18 +179,18 @@ export const updateEvent = async (req, res) => {
       }
     }
 
-    if(req.file){
-      updateData.image = req.file.filename;
+    if (req.file) {
+      updateData.image = req.file.path;
     }
 
-   
+
     const updatedEvent = await Event.findByIdAndUpdate(
       id,
       updateData,
       { new: true, runValidators: true }
     ).populate('category', 'name')
-     .populate('venue', 'name city')
-     .populate('organizer', 'name email');
+      .populate('venue', 'name city')
+      .populate('organizer', 'name email');
 
     res.status(200).json({
       success: true,
@@ -200,7 +200,7 @@ export const updateEvent = async (req, res) => {
 
   } catch (error) {
     console.log('Error updating event:', error);
-    
+
     res.status(500).json({
       success: false,
       message: 'Internal Server Problem',
@@ -221,7 +221,7 @@ export const getAllEvents = async (req, res) => {
       organizer = ''
     } = req.query;
 
-   
+
     const query = {};
 
     // Search by title only 
@@ -242,7 +242,7 @@ export const getAllEvents = async (req, res) => {
     // Filter by status
     if (status && status !== 'all') {
       const now = new Date();
-      
+
       switch (status) {
         case 'draft':
           query.isPublished = false;
@@ -302,10 +302,10 @@ export const getAllEvents = async (req, res) => {
       }
     }
 
-   
+
     const sort = { createdAt: -1 };
 
-   
+
     const events = await Event.find(query)
       .populate('category', 'name')
       .populate('venue', 'name city')
@@ -313,7 +313,7 @@ export const getAllEvents = async (req, res) => {
       .sort(sort)
       .lean();
 
-   
+
     const formattedEvents = events.map(event => ({
       id: event._id,
       title: event.title,
@@ -328,7 +328,7 @@ export const getAllEvents = async (req, res) => {
       status: event.status,
       createdAt: event.createdAt,
       updatedAt: event.updatedAt
-      
+
     }));
 
     res.status(200).json({
@@ -393,22 +393,22 @@ export const getEventsByCategory = async (req, res) => {
       });
     }
 
-    const events = await Event.find({ 
+    const events = await Event.find({
       category: categoryId,
-      isPublished: true 
+      isPublished: true
     })
-    .populate('organizer', 'name')
-    .populate('venue', 'name city')
-    .populate('category', 'name')
-    .sort({ startDate: 1 }) 
-    .lean();
+      .populate('organizer', 'name')
+      .populate('venue', 'name city')
+      .populate('category', 'name')
+      .sort({ startDate: 1 })
+      .lean();
 
     // Format events for response
     const formattedEvents = events.map(event => {
       const now = new Date();
       const startDate = new Date(event.startDate);
       const endDate = event.endDate ? new Date(event.endDate) : null;
-      
+
       let eventStatus = 'upcoming';
       if (startDate <= now) {
         if (endDate && endDate >= now) {
@@ -457,7 +457,7 @@ export const getEventsByVenue = async (req, res) => {
     const { venueId } = req.params;
 
     console.log("venue id is:" + venueId);
-    
+
     const venue = await Venue.findById(venueId);
     if (!venue) {
       return res.status(404).json({
@@ -466,21 +466,21 @@ export const getEventsByVenue = async (req, res) => {
       });
     }
 
-    const events = await Event.find({ 
+    const events = await Event.find({
       venue: venueId,
-      isPublished: true 
+      isPublished: true
     })
-    .populate('organizer', 'name')
-    .populate('venue', 'name city address capacity')
-    .populate('category', 'name')
-    .sort({ startDate: 1 })
-    .lean();
+      .populate('organizer', 'name')
+      .populate('venue', 'name city address capacity')
+      .populate('category', 'name')
+      .sort({ startDate: 1 })
+      .lean();
 
     const formattedEvents = events.map(event => {
       const now = new Date();
       const startDate = new Date(event.startDate);
       const endDate = event.endDate ? new Date(event.endDate) : null;
-      
+
       // Determine event status
       let eventStatus = 'upcoming';
       if (startDate <= now) {

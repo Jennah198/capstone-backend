@@ -9,6 +9,7 @@ import orderRoutes from './routes/order.route.js'
 import ticketRoutes from './routes/ticketDownload.route.js'
 import adminRoutes from './routes/admin.route.js'
 import paymentRoutes from './routes/payment.route.js'
+import mediaRoutes from './routes/media.route.js'
 
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
@@ -47,6 +48,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/media', mediaRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);

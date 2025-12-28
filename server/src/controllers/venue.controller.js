@@ -22,7 +22,7 @@ export const createVenue = async (req, res) => {
             return res.status(400).json({ success: false, message: "capacity is required" });
         }
 
-        const imageFile = req.file ? req.file.filename : "";
+        const imageFile = req.file ? req.file.path : "";
 
 
         const venue = await Venue.create({
@@ -109,7 +109,7 @@ export const updateVenue = async (req, res) => {
         venue.capacity = capacity || venue.capacity;
 
         if (req.file) {
-            venue.image = req.file.filename;
+            venue.image = req.file.path;
         }
 
         await venue.save();

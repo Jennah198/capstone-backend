@@ -206,3 +206,19 @@ const PaymentSchema = new Schema(
 );
 
 export const Payment = mongoose.model("Payment", PaymentSchema);
+
+/* ======================================================
+   MEDIA MODEL
+====================================================== */
+
+const MediaSchema = new Schema(
+  {
+    title: { type: String, required: true },
+    description: String,
+    url: { type: String, required: true },
+    type: { type: String, enum: ["image", "video"], default: "image" },
+  },
+  { timestamps: true }
+);
+
+export const Media = mongoose.model("Media", MediaSchema);
