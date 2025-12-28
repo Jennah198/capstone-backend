@@ -22,7 +22,9 @@ const generateToken = (user) => {
 // ================== REGISTER ==================
 export const register = async (req, res) => {
   try {
-    const { name, email, password, phone, secretKey } = req.body;
+    let { name, email, password, phone, secretKey } = req.body;
+
+    if (email) email = email.toLowerCase().trim();
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -89,7 +91,9 @@ export const register = async (req, res) => {
 // ================== LOGIN ==================
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+
+    if (email) email = email.toLowerCase().trim();
 
     if (!email || !password) {
       return res.status(400).json({
@@ -123,8 +127,8 @@ export const login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true, // Required for cross-site cookies
+      sameSite: "none", // Required for render.com -> localhost
       maxAge: 1 * 24 * 60 * 60 * 1000,
     });
 
@@ -153,7 +157,7 @@ export const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
     sameSite: "none",
-    secure: process.env.NODE_ENV === "production",
+    secure: true,
     path: "/",
   });
 
