@@ -10,7 +10,7 @@ import {
   deleteSupplier,
   getSuppliersByCategory,
 } from "../controllers/supplier.controller.js";
-import { upload } from "../middlewares/uploadMiddleware.js";
+import upload from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
