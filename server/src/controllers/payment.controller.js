@@ -1,12 +1,5 @@
 import axios from "axios";
-import { Chapa } from "chapa-nodejs";
-import dotenv from "dotenv";
 import { Payment, Order, Ticket, Event } from "../model/schema.js";
-
-dotenv.config();
-const chapa = new Chapa({
-  secretKey: process.env.CHAPA_SECRET_KEY,
-});
 
 // export const pay = async (req, res) => {
 //   const { first_name, last_name, email, phone_number, amount } = req.body;
@@ -147,60 +140,50 @@ export const pay = async (req, res) => {
   if (!orderId || !first_name || !last_name || !email || !phone_number) {
     return res.status(400).json({ message: "Missing required payment fields" });
   }
-  // console.log(orderId, first_name, last_name, email, phone_number, amount);
 
   try {
     // Use phone number as provided (assuming it's in correct Ethiopian format)
     const formattedPhone = phone_number.trim();
 
-    // const tx_ref = `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const tx_ref = await chapa.genTxRef();
+    const tx_ref = `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const order = await Order.findById(orderId);
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
     const amount = order.totalAmount;
-    // 3️⃣ Create Payment record in DB (status = PENDING)
+    // Create Payment record as SUCCESS
     const payment = await Payment.create({
       order: order._id,
       user: order.user,
       tx_ref,
       amount,
       currency: "ETB",
-      status: "PENDING",
+      status: "SUCCESS",
+      chapaRef: `MOCK-${tx_ref}`,
     });
 
-    // 4️⃣ Update Order with payment info
-    order.paymentStatus = "pending";
+    // Update Order record to paid
+    order.paymentStatus = "paid";
     await order.save();
 
-    const response = await chapa.initialize({
-      first_name,
-      last_name,
-      email,
-      phone_number: formattedPhone,
-      currency: "ETB",
-      amount: String(amount),
-      tx_ref: tx_ref,
-      callback_url: `${
-        process.env.BASE_URL || "https://capstone-backend-focn.onrender.com"
-      }/api/payment/callback/${tx_ref}`,
-      customization: {
-        title: "Test Title",
-        description: "Test Description",
-      },
-    });
+    // Generate tickets
+    const event = await Event.findById(order.event);
+    for (let i = 0; i < order.quantity; i++) {
+      await Ticket.create({
+        event: event._id,
+        user: order.user,
+        order: order._id,
+        ticketType: order.ticketType,
+        price: order.price,
+        ticketCode: `TICKET-${Date.now()}-${i}`,
+      });
+    }
 
-    res.json({ checkout_url: response.data?.checkout_url, tx_ref, payment });
+    res.json({ success: true, tx_ref, payment });
   } catch (err) {
-    console.error("Payment initialization error:", err);
-    console.error("Error details:", err.response?.data || err.message);
-
-    res.status(500).json({
-      error: "Payment initialization failed",
-      details: err.response?.data || err.message,
-    });
+    console.error("Payment error:", err);
+    res.status(500).json({ error: "Payment failed", details: err.message });
   }
 };
 
