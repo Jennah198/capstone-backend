@@ -1,6 +1,6 @@
 import express from "express";
 import { protect } from "../middlewares/authMiddleware.js";
-import { roleCheck } from "../middlewares/roleCheckMiddleware.js";
+import { authorize } from "../middlewares/roleCheckMiddleware.js";
 import {
   getAllSuppliers,
   getPopularSuppliers,
@@ -24,17 +24,17 @@ router.get("/category/:category", getSuppliersByCategory);
 router.post(
   "/create",
   protect,
-  roleCheck(["admin"]),
+  authorize(["admin"]),
   upload.single("image"),
   createSupplier
 );
 router.put(
   "/update/:id",
   protect,
-  roleCheck(["admin"]),
+  authorize(["admin"]),
   upload.single("image"),
   updateSupplier
 );
-router.delete("/delete/:id", protect, roleCheck(["admin"]), deleteSupplier);
+router.delete("/delete/:id", protect, authorize(["admin"]), deleteSupplier);
 
 export default router;
