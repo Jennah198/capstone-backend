@@ -142,9 +142,9 @@ const chapa = new Chapa({
 // };
 
 export const pay = async (req, res) => {
-  const { orderId, first_name, last_name, phone_number } = req.body;
+  const { orderId, first_name, last_name, email, phone_number } = req.body;
 
-  if (!orderId || !first_name || !last_name || !phone_number) {
+  if (!orderId || !first_name || !last_name || !email || !phone_number) {
     return res.status(400).json({ message: "Missing required payment fields" });
   }
   // console.log(orderId, first_name, last_name, email, phone_number, amount);
@@ -178,6 +178,7 @@ export const pay = async (req, res) => {
     const response = await chapa.initialize({
       first_name,
       last_name,
+      email,
       phone_number: formattedPhone,
       currency: "ETB",
       amount: String(amount),
