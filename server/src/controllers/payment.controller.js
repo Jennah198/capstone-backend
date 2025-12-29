@@ -150,13 +150,8 @@ export const pay = async (req, res) => {
   // console.log(orderId, first_name, last_name, email, phone_number, amount);
 
   try {
-    // Format phone number for Chapa (Ethiopian format)
-    let formattedPhone = phone_number.trim();
-    if (formattedPhone.startsWith("0")) {
-      formattedPhone = "+251" + formattedPhone.substring(1);
-    } else if (!formattedPhone.startsWith("+")) {
-      formattedPhone = "+251" + formattedPhone;
-    }
+    // Use phone number as provided (assuming it's in correct Ethiopian format)
+    const formattedPhone = phone_number.trim();
 
     // const tx_ref = `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const tx_ref = await chapa.genTxRef();
