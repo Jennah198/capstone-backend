@@ -222,3 +222,43 @@ const MediaSchema = new Schema(
 );
 
 export const Media = mongoose.model("Media", MediaSchema);
+
+/* ======================================================
+   SUPPLIER MODEL
+====================================================== */
+
+const SupplierSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    category: {
+      type: String,
+      enum: [
+        "photographer",
+        "videographer",
+        "decorator",
+        "venue_planner",
+        "choreographer",
+        "designer",
+        "makeup_artist",
+        "bar_services",
+      ],
+      required: true,
+    },
+    description: { type: String, default: "" },
+    location: { type: String, default: "" },
+    image: { type: String, default: "" },
+    rating: { type: Number, default: 5, min: 1, max: 5 },
+    reviews: { type: Number, default: 0 },
+    contactInfo: {
+      phone: String,
+      email: String,
+      website: String,
+    },
+    isActive: { type: Boolean, default: true },
+    isPopular: { type: Boolean, default: false },
+    isTrending: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+export const Supplier = mongoose.model("Supplier", SupplierSchema);

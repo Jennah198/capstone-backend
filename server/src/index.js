@@ -1,15 +1,16 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 import express from "express";
 import connectDB from "./config/db.js";
 import authRoute from "./routes/auth.route.js";
-import eventRoutes from "./routes/event.route.js"
-import categoryRoutes from './routes/category.route.js'
-import venueRoutes from './routes/venue.route.js'
-import orderRoutes from './routes/order.route.js'
-import ticketRoutes from './routes/ticketDownload.route.js'
-import adminRoutes from './routes/admin.route.js'
-import paymentRoutes from './routes/payment.route.js'
-import mediaRoutes from './routes/media.route.js'
+import eventRoutes from "./routes/event.route.js";
+import categoryRoutes from "./routes/category.route.js";
+import venueRoutes from "./routes/venue.route.js";
+import orderRoutes from "./routes/order.route.js";
+import ticketRoutes from "./routes/ticketDownload.route.js";
+import adminRoutes from "./routes/admin.route.js";
+import paymentRoutes from "./routes/payment.route.js";
+import mediaRoutes from "./routes/media.route.js";
+import supplierRoutes from "./routes/supplier.route.js";
 
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
@@ -21,11 +22,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-
-app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 app.use(cookieParser());
 app.use(express.json());
@@ -39,16 +41,16 @@ mongoose.connection.once("open", () => {
   console.log("Connected to MongoDB");
 });
 
-
 app.use("/api/auth", authRoute);
-app.use('/api/events', eventRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/venues', venueRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/tickets', ticketRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/payment', paymentRoutes);
-app.use('/api/media', mediaRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/venues", venueRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/tickets", ticketRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/payment", paymentRoutes);
+app.use("/api/media", mediaRoutes);
+app.use("/api/suppliers", supplierRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
