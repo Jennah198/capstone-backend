@@ -26,6 +26,8 @@ export const createOrder = async (req, res) => {
     const ticketPriceField =
       ticketType === "normal" ? "normalPrice" : "vipPrice";
 
+    const now = new Date();
+
     // Use findOneAndUpdate to atomically check and decrement quantity
     const updateResult = await Event.findOneAndUpdate(
       {
