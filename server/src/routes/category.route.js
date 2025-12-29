@@ -20,8 +20,8 @@ router.post(
   upload.single("image"),
   createCategory
 );
-router.get("/get-category", protect, getCategories);
-router.get("/get-single-category/:id", protect, getSingleCategory);
+router.get("/get-category", getCategories);
+router.get("/get-single-category/:id", getSingleCategory);
 router.put(
   "/update-category/:id",
   protect,
