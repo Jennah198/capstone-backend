@@ -169,8 +169,9 @@ export const pay = async (req, res) => {
 
     // Generate tickets
     const event = await Event.findById(order.event);
+    const tickets = [];
     for (let i = 0; i < order.quantity; i++) {
-      await Ticket.create({
+      const ticket = await Ticket.create({
         event: event._id,
         user: order.user,
         order: order._id,
@@ -178,9 +179,10 @@ export const pay = async (req, res) => {
         price: order.price,
         ticketCode: `TICKET-${Date.now()}-${i}`,
       });
+      tickets.push(ticket);
     }
 
-    res.json({ success: true, tx_ref, payment });
+    res.json({ success: true, tx_ref, payment, order, tickets, event });
   } catch (err) {
     console.error("Payment error:", err);
     res.status(500).json({ error: "Payment failed", details: err.message });
