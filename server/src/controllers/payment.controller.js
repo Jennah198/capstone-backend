@@ -142,32 +142,29 @@ const chapa = new Chapa({
 // };
 
 export const pay = async (req, res) => {
-  const { orderId, first_name, last_name, email, phone_number } =
-    req.body;
+  const { orderId, first_name, last_name, email, phone_number } = req.body;
 
-  if (
-    !orderId ||
-    !first_name ||
-    !last_name ||
-    !email ||
-    !phone_number
-  ) {
+  if (!orderId || !first_name || !last_name || !email || !phone_number) {
     return res.status(400).json({ message: "Missing required payment fields" });
   }
   // console.log(orderId, first_name, last_name, email, phone_number, amount);
 
   try {
+    // Format phone number for Chapa (Ethiopian format)
+    let formattedPhone = phone_number.trim();
+    if (formattedPhone.startsWith("0")) {
+      formattedPhone = "+251" + formattedPhone.substring(1);
+    } else if (!formattedPhone.startsWith("+")) {
+      formattedPhone = "+251" + formattedPhone;
+    }
+
     // const tx_ref = `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-   const tx_ref = await chapa.genTxRef();
+    const tx_ref = await chapa.genTxRef();
 
-  
     const order = await Order.findById(orderId);
-    
 
-    
-    
     if (!order) return res.status(404).json({ message: "Order not found" });
-    
+
     const amount = order.totalAmount;
     // 3️⃣ Create Payment record in DB (status = PENDING)
     const payment = await Payment.create({
@@ -178,35 +175,36 @@ export const pay = async (req, res) => {
       currency: "ETB",
       status: "PENDING",
     });
-    
 
     // 4️⃣ Update Order with payment info
     order.paymentStatus = "pending";
     await order.save();
 
-    
-
     const response = await chapa.initialize({
       first_name,
       last_name,
       email: email.trim(),
-      phone_number,
+      phone_number: formattedPhone,
       currency: "ETB",
       amount: String(amount),
       tx_ref: tx_ref,
-      callback_url: `${process.env.BASE_URL}/api/payment/callback/${tx_ref}`,
+      callback_url: `${
+        process.env.BASE_URL || "https://capstone-backend-focn.onrender.com"
+      }/api/payment/callback/${tx_ref}`,
       customization: {
         title: "Test Title",
         description: "Test Description",
       },
     });
 
-    res.json({ checkout_url: response.data?.checkout_url , tx_ref , payment });
+    res.json({ checkout_url: response.data?.checkout_url, tx_ref, payment });
   } catch (err) {
     console.error("Payment initialization error:", err);
+    console.error("Error details:", err.response?.data || err.message);
 
     res.status(500).json({
       error: "Payment initialization failed",
+      details: err.response?.data || err.message,
     });
   }
 };
@@ -224,7 +222,7 @@ export const verify = async (req, res) => {
     );
 
     const data = response.data.data;
-    
+
     if (!data || data.status !== "success") {
       // Payment failed or pending
       return res.status(400).json({ message: "Payment not successful", data });
@@ -279,8 +277,8 @@ export const verify = async (req, res) => {
 };
 
 export const chapaCallback = async (req, res) => {
-  const { tx_ref } = req.params; 
- console.log(tx_ref);
+  const { tx_ref } = req.params;
+  console.log(tx_ref);
   if (!tx_ref) {
     return res.status(400).json({ message: "tx_ref is required" });
   }
@@ -336,7 +334,14 @@ export const chapaCallback = async (req, res) => {
     }
 
     // 7️⃣ Respond to Chapa
-    res.sendStatus(200).json({ message: "Payment processed successfully" , payment , order , event});
+    res
+      .sendStatus(200)
+      .json({
+        message: "Payment processed successfully",
+        payment,
+        order,
+        event,
+      });
   } catch (err) {
     console.error(err.response?.data || err.message);
     res.sendStatus(500);
