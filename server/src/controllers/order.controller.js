@@ -22,36 +22,49 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    const event = await Event.findById(eventId);
-    if (!event) {
-      return res.status(404).json({
-        success: false,
-        message: "Event not found",
-      });
-    }
-
-    // Check event status
-    const now = new Date();
-    const endDate = new Date(event.endDate);
-
-    if (endDate < now) {
-      return res.status(400).json({
-        success: false,
-        message: "Event has already ended",
-      });
-    }
-
-    // Check ticket availability
+    // Check ticket availability and decrement atomically
     const ticketPriceField =
       ticketType === "normal" ? "normalPrice" : "vipPrice";
-    const availableTickets = event[ticketPriceField]?.quantity || 0;
 
-    if (availableTickets < quantity) {
+    // Use findOneAndUpdate to atomically check and decrement quantity
+    const updateResult = await Event.findOneAndUpdate(
+      {
+        _id: eventId,
+        [`${ticketPriceField}.quantity`]: { $gte: quantity },
+        endDate: { $gte: now },
+      },
+      {
+        $inc: {
+          [`${ticketPriceField}.quantity`]: -quantity,
+          totalTicketsSold: quantity,
+        },
+      },
+      { new: true }
+    );
+
+    if (!updateResult) {
+      // Either not enough tickets or event ended
+      const eventCheck = await Event.findById(eventId);
+      if (!eventCheck) {
+        return res.status(404).json({
+          success: false,
+          message: "Event not found",
+        });
+      }
+      if (new Date(eventCheck.endDate) < now) {
+        return res.status(400).json({
+          success: false,
+          message: "Event has already ended",
+        });
+      }
+      const availableTickets = eventCheck[ticketPriceField]?.quantity || 0;
       return res.status(409).json({
         success: false,
         message: `Only ${availableTickets} ${ticketType} tickets available`,
       });
     }
+
+    const event = updateResult;
 
     // Calculate final price
     const pricePerTicket = event[ticketPriceField]?.price || 0;
@@ -105,11 +118,6 @@ export const createOrder = async (req, res) => {
     //     tickets.push(ticket);
     //     qrCodes.push(qrCodeImage);
     // }
-
-    // Update ticket availability in event
-    event[ticketPriceField].quantity -= quantity;
-    event.totalTicketsSold = (event.totalTicketsSold || 0) + quantity;
-    await event.save();
 
     // Update order with ticket references
     // order.tickets = tickets.map(ticket => ticket._id);
