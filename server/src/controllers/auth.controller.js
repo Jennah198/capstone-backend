@@ -22,7 +22,7 @@ const generateToken = (user) => {
 // ================== REGISTER ==================
 export const register = async (req, res) => {
   try {
-    let { name, email, password, phone, secretKey } = req.body;
+    let { name, email, password, phone, secretKey, role } = req.body;
 
     if (email) email = email.toLowerCase().trim();
 
@@ -48,15 +48,20 @@ export const register = async (req, res) => {
       });
     }
 
-    let role = "user"
-    const secret = process.env.SECRET_KEY
-    // FOR REGISTER AS ADMIN IF SECRET KEY IS CORRECT, OTHERWISE REGISTER AS USER
-    if (secretKey) {
-      if (secretKey !== secret) {
-        return res.status(400).json({ success: false, message: "Invalid secretKey" })
-      } else {
-        role = "admin"
-      }
+    // Default role is user
+    if (!role) role = "user";
+
+    const secret = process.env.SECRET_KEY;
+    // Validate secretKey for admin role only
+    if (role === "admin" && (!secretKey || secretKey !== secret)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid secretKey for admin role" });
+    }
+
+    // Ensure role is valid
+    if (!["user", "organizer", "admin"].includes(role)) {
+      return res.status(400).json({ success: false, message: "Invalid role" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -70,8 +75,18 @@ export const register = async (req, res) => {
       isVerified: false,
     });
 
+    const token = generateToken(user);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true, // Required for cross-site cookies
+      sameSite: "none", // Required for render.com -> localhost
+      maxAge: 1 * 24 * 60 * 60 * 1000,
+    });
+
     return res.status(201).json({
       message: "User registered successfully",
+      token,
       user: {
         id: user._id,
         name: user.name,
@@ -152,7 +167,6 @@ export const login = async (req, res) => {
   }
 };
 
-
 export const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
@@ -167,14 +181,11 @@ export const logout = (req, res) => {
   });
 };
 
-
-
 //CHANGE ROLE ---------> ONLY FOR ADMIN
 export const changeUserRole = async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
-
 
     const allowedRoles = ["user", "organizer", "admin"];
     if (!allowedRoles.includes(role)) {
@@ -213,14 +224,10 @@ export const changeUserRole = async (req, res) => {
   }
 };
 
-
-
 // GET ALL USERS ---------> ONLY FOR ADMIN
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find()
-      .select("-password")
-      .sort({ createdAt: -1 });
+    const users = await User.find().select("-password").sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -234,7 +241,6 @@ export const getAllUsers = async (req, res) => {
     });
   }
 };
-
 
 export const getUserProfile = async (req, res) => {
   try {
@@ -255,7 +261,6 @@ export const getUserProfile = async (req, res) => {
       success: true,
       user,
     });
-
   } catch (error) {
     console.error("Get profile error:", error);
     res.status(500).json({
