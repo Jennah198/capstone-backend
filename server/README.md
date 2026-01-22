@@ -59,12 +59,16 @@ server/
 git clone <https://github.com/Jennah198/capstone-backend.git>
 cd capstone-backend/server
 
+```
 ### 2️⃣ Install Dependencies
 ```bash
 npm install
 
+```
 ### 3️⃣ Environment Configuration
 Create a `.env` file in the `server` root directory and add the following variables:
+
+```
 
 ```ini
 PORT=5000
@@ -79,6 +83,8 @@ CLOUDINARY_API_SECRET=your_api_secret
 # Chapa Payment Configuration
 CHAPA_SECRET_KEY=your_chapa_secret_key
 CHAPA_PUBLIC_KEY=your_chapa_public_key
+
+```
 
 ## ▶️ Running the Application
 
