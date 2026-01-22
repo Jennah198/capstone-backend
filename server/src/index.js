@@ -52,6 +52,15 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/suppliers", supplierRoutes);
 
+
+// Root route 
+app.get("/", (req, res) => {
+  res.json({
+    status: "OK",
+    message: "Capstone Backend API is running 🚀"
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
