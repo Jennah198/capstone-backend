@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { OAuth2Client } from "google-auth-library";
 import { User } from "../model/schema.js"; // use .js if your file is JS
 
 // ================== CONFIG ==================
@@ -267,5 +268,172 @@ export const getUserProfile = async (req, res) => {
       success: false,
       message: "Failed to fetch user profile",
     });
+  }
+};
+
+// ================== GOOGLE OAUTH ==================
+export const googleAuthRedirect = (req, res) => {
+  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+  const redirectUri = process.env.GOOGLE_CALLBACK_URL; // e.g. https://your-backend.com/api/auth/google/callback
+  const scope = [
+    "openid",
+    "profile",
+    "email",
+  ].join(" ");
+
+  const params = new URLSearchParams({
+    client_id: googleClientId,
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope,
+    access_type: "offline",
+    prompt: "select_account",
+  });
+
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+  return res.redirect(authUrl);
+};
+
+export const googleAuthCallback = async (req, res) => {
+  try {
+    const code = req.query.code;
+    if (!code) return res.status(400).send("Missing code from Google");
+
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code: String(code),
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: process.env.GOOGLE_CALLBACK_URL,
+        grant_type: "authorization_code",
+      }),
+    });
+
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) {
+      console.error("Google token exchange failed:", tokenData);
+      return res.status(400).send("Google token exchange failed");
+    }
+
+    const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+
+    const profile = await userInfoRes.json();
+    if (!profile || !profile.email) {
+      return res.status(400).send("Failed to fetch Google user info");
+    }
+
+    // Upsert user
+    let user = await User.findOne({ email: profile.email.toLowerCase() });
+    if (!user) {
+      user = await User.create({
+        name: profile.name || profile.email.split("@")[0],
+        email: profile.email.toLowerCase(),
+        password: "", // no local password
+        role: "user",
+        isVerified: true,
+        profilePic: profile.picture || undefined,
+      });
+    } else {
+      // Update profile fields if changed
+      let changed = false;
+      if (profile.name && user.name !== profile.name) {
+        user.name = profile.name;
+        changed = true;
+      }
+      if (profile.picture && user.profilePic !== profile.picture) {
+        user.profilePic = profile.picture;
+        changed = true;
+      }
+      if (changed) await user.save();
+    }
+
+    const token = generateToken(user);
+
+    // Set cookie and redirect to client
+    const CLIENT_URL = process.env.CLIENT_URL || process.env.FRONTEND_URL || "http://localhost:5173";
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 1 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.redirect(CLIENT_URL);
+  } catch (error) {
+    console.error("Google callback error:", error);
+    return res.status(500).send("Google auth failed");
+  }
+};
+
+// ================== GOOGLE ID TOKEN LOGIN ==================
+export const googleTokenLogin = async (req, res) => {
+  try {
+    const { id_token } = req.body;
+    if (!id_token) return res.status(400).json({ success: false, message: "Missing id_token" });
+
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    const ticket = await client.verifyIdToken({ idToken: id_token, audience: process.env.GOOGLE_CLIENT_ID });
+    const payload = ticket.getPayload();
+
+    if (!payload || !payload.email) {
+      return res.status(400).json({ success: false, message: "Invalid Google token payload" });
+    }
+
+    const email = payload.email.toLowerCase();
+    const name = payload.name || email.split("@")[0];
+    const picture = payload.picture;
+
+    // Upsert user
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        password: "", // no local password
+        role: "user",
+        isVerified: true,
+        profilePic: picture || undefined,
+      });
+    } else {
+      let changed = false;
+      if (name && user.name !== name) {
+        user.name = name;
+        changed = true;
+      }
+      if (picture && user.profilePic !== picture) {
+        user.profilePic = picture;
+        changed = true;
+      }
+      if (changed) await user.save();
+    }
+
+    const token = generateToken(user);
+
+    // Set cookie and respond with user
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 1 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profilePic: user.profilePic,
+        isVerified: user.isVerified,
+      },
+    });
+  } catch (error) {
+    console.error("Google token login error:", error);
+    return res.status(500).json({ success: false, message: "Google token verification failed" });
   }
 };
