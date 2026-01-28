@@ -22,9 +22,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const allowedOrigins = [process.env.FRONTEND_URL, "https://capstonefrontend-psi.vercel.app", "http://localhost:5173"].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "https://capstonefrontend-psi.vercel.app",
+    origin: allowedOrigins,
     credentials: true,
   })
 );
